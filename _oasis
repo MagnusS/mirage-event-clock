@@ -1,0 +1,27 @@
+OASISFormat: 0.4
+Name:        mirage-event-clock
+Version:     0.1
+Synopsis:    Event driven clock for Mirage
+Authors:     Magnus Skjegstad
+License:     ISC
+Plugins:     META (0.3), DevFiles (0.3)
+BuildTools:  ocamlbuild
+
+Library "mirage-event-clock"
+  Path:              lib/
+  Findlibname:       mirage-event-clock
+  BuildDepends:      lwt, mirage-types, duration
+  Modules:           Event_clock
+
+Executable "test"
+  CompiledObject:     best
+  Path:               lib_test/
+  Build$:             flag(tests)
+  Install:            false
+  MainIs:             test.ml
+  Custom:             true
+  BuildDepends:       lwt,lwt.unix,mirage-event-clock,duration
+
+Test test
+  Run$:               flag(tests)
+  Command:            $test -q 

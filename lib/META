@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 7dd5fe9c2bc87a814316195a87b39997)
+version = "0.1"
+description = "Event driven clock for Mirage"
+requires = "lwt mirage-types duration"
+archive(byte) = "mirage-event-clock.cma"
+archive(byte, plugin) = "mirage-event-clock.cma"
+archive(native) = "mirage-event-clock.cmxa"
+archive(native, plugin) = "mirage-event-clock.cmxs"
+exists_if = "mirage-event-clock.cma"
+# OASIS_STOP
+
