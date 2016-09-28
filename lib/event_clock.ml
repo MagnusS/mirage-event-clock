@@ -35,7 +35,7 @@ module TimeEvent = struct
     t.waiter
 
   let wake t =
-    Lwt.wakeup t.waker ()
+    Lwt.wakeup_later t.waker ()
 
   let time t = 
     t.ts
@@ -74,19 +74,6 @@ module Time = struct
 
   let timeline = ref (Pqueue.empty)
 
-(*  let run () =
-    (match Pqueue.lookup_min (!timeline) with
-    | Some te when (Int64.compare (TimeEvent.time te) (!Mclock.current_time_in_ns) <= 0) -> begin
-        timeline := Pqueue.remove_min (!timeline) ; 
-        (*Mclock.current_time_in_ns := (TimeEvent.time te);*)
-        TimeEvent.wake te
-      end
-    | _ -> begin
-        Mclock.advance_time (Duration.of_us 100);
-        Printf.printf "len=%d time=%f\n%!" (Lwt_sequence.length Lwt_main.leave_iter_hooks) (Duration.to_f (!Mclock.current_time_in_ns));
-        Printf.printf "timer_count=%d writable_count=%d readable_count=%d\n%!" (Lwt_engine.timer_count ()) (Lwt_engine.writable_count ()) (Lwt_engine.readable_count ())
-    end) *)
-
   let rec run () =
     (match Pqueue.lookup_min (!timeline) with
     | Some te -> begin
@@ -95,7 +82,9 @@ module Time = struct
         TimeEvent.wake te; 
       end
     | _ -> begin
-    end)
+    end);
+    Lwt.pause () >>= fun () ->
+    run ()
     
   let sleep_ns ns = 
     let te = TimeEvent.create (Int64.add ns (!Mclock.current_time_in_ns)) in
@@ -104,7 +93,4 @@ module Time = struct
 end
 
 let () =
-  let _ = Lwt_sequence.add_l (fun () -> Time.run ()) Lwt_main.leave_iter_hooks in
-(*  Lwt_engine.on_timer 0.0001 true (fun f -> ()); (* this is required to unblock the main loop if all threads are sleeping *)*)
-  ()
-
+    Lwt.async ( fun () -> Time.run () );
