@@ -9,7 +9,7 @@ let sleep_and_run c ms =
 let rec loop x =
     match x with
     | 0 -> Lwt.return_unit
-    | n -> Lwt_main.yield () >>= fun () -> loop (n-1)
+    | n -> Lwt.pause () >>= fun () -> loop (n-1)
 
 let rec wait_loop c ms n =
     match n with
@@ -25,6 +25,9 @@ let test =
     | `Ok x -> Lwt.return x >>= fun c ->
     sleep_and_run c 3500 >>= fun () ->
     loop 100 >>= fun () ->
+    Lwt.async ( fun f -> wait_loop c 999 10 ) ; 
+    loop 5 >>= fun () -> (* only allow half of the results to return before cancelling *)
+    Event_clock.Time.cancel_all ();
     Lwt.async ( fun f -> wait_loop c 999 10 ) ; 
     Lwt.join [
         (loop 100000 >>= fun () -> sleep_and_run c 1000);
@@ -47,7 +50,8 @@ let test =
         sleep_and_run c 7000 ; 
         sleep_and_run c 9000 ; 
         sleep_and_run c 1100 ] >>= fun () ->
-    Printf.printf "time is %Ld\n" (Event_clock.Mclock.elapsed_ns c); Lwt.return_unit
+    Printf.printf "time is %Ld\n%!" (Event_clock.Mclock.elapsed_ns c);
+    Lwt.return_unit
 
 let () =
     Lwt_main.run test

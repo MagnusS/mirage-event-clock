@@ -37,6 +37,9 @@ module TimeEvent = struct
   let wake t =
     Lwt.wakeup_later t.waker ()
 
+  let cancel t =
+    Lwt.cancel t.waiter
+
   let time t = 
     t.ts
 
@@ -90,6 +93,17 @@ module Time = struct
     let te = TimeEvent.create (Int64.add ns (!Mclock.current_time_in_ns)) in
     timeline := (Pqueue.add te (!timeline));
     TimeEvent.wait te
+
+  let rec cancel_all () =
+    (** Cancel all future events in the timeline. Does not advance time. *)
+    match Pqueue.lookup_min (!timeline) with
+    | None -> Lwt.return_unit
+    | Some te -> begin
+        timeline := Pqueue.remove_min (!timeline) ;
+        TimeEvent.cancel te;
+        cancel_all ()
+    end
+     
 end
 
 let () =
