@@ -67,7 +67,7 @@ module Mclock = struct
     current_time_in_ns := Int64.add (!current_time_in_ns) ns
 
   let connect () = 
-    Lwt.return (`Ok !current_time_in_ns)
+    Lwt.return (!current_time_in_ns)
 
 end
 
@@ -90,6 +90,7 @@ module Time = struct
     run ()
     
   let sleep_ns ns = 
+    assert(ns >= 0L);
     let te = TimeEvent.create (Int64.add ns (!Mclock.current_time_in_ns)) in
     timeline := (Pqueue.add te (!timeline));
     TimeEvent.wait te
