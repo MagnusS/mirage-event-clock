@@ -20,14 +20,12 @@ let rec wait_loop c ms n =
            wait_loop c ms (n-1)
 
 let test = 
-    Event_clock.Mclock.connect () >>= function
-    | `Error x -> raise (Failure "internal error")
-    | `Ok x -> Lwt.return x >>= fun c ->
+    Event_clock.Mclock.connect () >>= fun c ->
     sleep_and_run c 3500 >>= fun () ->
     loop 100 >>= fun () ->
     Lwt.async ( fun f -> wait_loop c 999 10 ) ; 
     loop 5 >>= fun () -> (* only allow half of the results to return before cancelling *)
-    Event_clock.Time.cancel_all ();
+    Event_clock.Time.cancel_all () >>= fun () ->
     Lwt.async ( fun f -> wait_loop c 999 10 ) ; 
     Lwt.join [
         (loop 100000 >>= fun () -> sleep_and_run c 1000);
